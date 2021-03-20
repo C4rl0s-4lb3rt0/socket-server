@@ -20,6 +20,6 @@ server.app.use( cors({ origin:true , credentials: true }) )
 // Rutas de servicios 
 server.app.use('/', router)
 
-server.start( ()=> {
+server.iniciar( ()=> {
      console.log(`servidor corriedno en el puerto  ${ server.port }`);
 } )

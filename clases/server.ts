@@ -5,66 +5,44 @@ import http from 'http';
 
 import * as socket from '../sockets/socket';
 
-
-
+//aplico el patron singleton para instanciar una sola vez a server
 export default class Server{
+    private static _instance: Server;
+    public app:express.Application;
+    public port: number;
+    public io: socketIO.Server;//encargado de los eventos
+    private httpServer: http.Server;
+    private constructor(){
+        this.app=express();
+        this.port=SERVER_PORT;
+        this.httpServer=new http.Server(this.app);
+        this.io=require("socket.io")(this.httpServer, {
+            cors: {
+                origin: true,
+                credentials: true
+              },            
+          });
+        this.escucharSockets();
+    }
+    
+    public static get instance(){
+        return this._instance||(this._instance=new this());
+    }
+ 
+    private escucharSockets(){
+        console.log('Escuchando conexiones');
+        this.io.on('connection',(cliente)=>{
+            console.log('Cliente conectado');
 
-     private static _intance:Server;
-
-     public app:express.Application;
-     public port: number;
-
-     public io: socketIO.Server;
-     private httpServer :http.Server;
-
-     private constructor(){
-
-          this.app = express();
-          this.port = SERVER_PORT; 
-
-          this.httpServer = new http.Server( this.app );
-          this.io = socketIO( this.httpServer ); 
-
-          this.escucharSockets()
-
-     }
-
-     public static get instance(){
-          return this._intance || ( this._intance = new this() );
-
-     }
-
-     private escucharSockets(){
-
-          console.log('escuchando conexiones - sockets');
-
-          this.io.on('connection', cliente => {
-               // console.log('Cliente conectado');
-               // console.log( cliente.id );
+                
+            // configuracion de mapas
+            socket.mapaSockets( cliente, this.io )
 
 
-
-               // Conectar cliente
-               socket.conectarCliente( cliente, this.io )
-
-               // Configurar Usuario
-               socket.configurarUsuario( cliente, this.io );
-
-               // Obtener usuarios activos
-               socket.obtenerUsuarios( cliente, this.io )
-
-               // Mensajes
-               socket.mensaje( cliente , this.io);
-
-               // Desconectar
-               socket.desconectar( cliente , this.io );
-               
-
-          })
-     }
-
-     start( callback: any ){
-          
-          this.httpServer.listen( this.port, callback );
-     }
+        })
+    }
+ 
+    iniciar(callback:any){
+     this.httpServer.listen(this.port,callback);
+ }
 }
